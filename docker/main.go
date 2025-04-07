@@ -1,14 +1,20 @@
-FROM golang:alpine AS build-env
+package main
 
-RUN mkdir /go/src/app && apk update && apk add git
-ADD main.go /go/src/app/
-WORKDIR /go/src/app
+import (
+   "log" 
+   "net/http" 
+)
 
-RUN GO111MODULE=auto CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o app .
+type Server struct{}
 
-FROM scratch
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+   w.WriteHeader(http.StatusOK)
+   w.Header().Set("Content-Type", "application/json")
+   w.Write([]byte(`{"message": "Hello Rams 2025"}`))
+}
 
-EXPOSE 8080
-WORKDIR /app
-COPY --from=build-env /go/src/app/app .
-ENTRYPOINT [ "./app" ]
+func main() {
+  s := &Server{}
+  http.Handle("/", s)
+  log.Fatal(http.ListenAndServe(":8080", nil))
+}
